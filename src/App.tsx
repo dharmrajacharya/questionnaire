@@ -1,72 +1,41 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import Papa from 'papaparse';
-import Questionnaire from './components/Questionnaire';
-import EvaluationResult from './components/EvaluationResult';
-import { Questionnaire as QuestionnaireModel } from './models/Questionnaire';
-import questionsCsv from './assets/questions.csv'; // Import CSV file
+import React from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginScreen from './screens/authentication/LoginScreen';
+import SignupScreen from './screens/authentication/SignupScreen';
+import ProfileScreen from './screens/profile/ProfileScreen';
+import Layout from './components/Layout';
 import './App.css';
+import TestScreen from './screens/questionsnaire/TestScreen';
+import { AuthProvider } from './services/AuthContext';
+import Header from './components/Header';
 
 const App: React.FC = () => {
-    const initialData: QuestionnaireModel = useMemo(() => ({
-        title: "Sample Questionnaire",
-        questions: [],
-    }), []);
-
-    const [questionnaire, setQuestionnaire] = useState<QuestionnaireModel>(initialData);
-    const [correctCount, setCorrectCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        const parseCSV = (csv: any) => {
-            Papa.parse(csv, {
-                header: true,
-                skipEmptyLines: true,
-                complete: (results: any) => {
-                    const formattedData = results.data.map((item: any) => ({
-                        id: item.id,
-                        text: item.question,
-                        options: item.options ? JSON.parse(item.options) : [],
-                        correctAnswer: item.correctAnswer,
-                    }));
-                    setQuestionnaire({ ...initialData, questions: formattedData });
-                },
-            });
-        };
-
-        const fetchData = async () => {
-            try {
-                fetch(questionsCsv)
-                    .then(response => response.text())
-                    .then(text => parseCSV(text))
-                    .catch(error => console.error('Error fetching CSV:', error));
-
-            } catch (error) {
-                console.error("Error loading CSV file:", error);
-            }
-        };
-
-        fetchData();
-    }, [initialData]); // Now `initialData` is memoized
-
-    const handleEvaluate = (count: number) => {
-        setCorrectCount(count);
-    };
-
     return (
-        <div className="App">
-            {correctCount === null ? (
-                <Questionnaire
-                    title={questionnaire.title}
-                    questionnaire={questionnaire}
-                    onEvaluate={handleEvaluate}
-                />
-            ) : (
-                <EvaluationResult
-                    correctCount={correctCount}
-                    totalQuestions={questionnaire.questions.length}
-                />
-            )}
-        </div>
-    );
+        <AuthProvider>
+        <BrowserRouter>
+          <Header />
+          <Routes>
+            <Route path="/" element={<LoginScreen />}/>
+            <Route index path="/login" element={<LoginScreen />} />
+            <Route path="/signup" element={<SignupScreen />} />
+            <Route path="/profile" element={<ProfileScreen />}/>
+            <Route path="/doTest" element={<TestScreen />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    )
+    // return (
+    //     <BrowserRouter>
+    //         <Routes>
+    //             <Route path="/" element={<Layout />}>
+    //                 <Route index element={<LoginScreen />}></Route>
+    //                 <Route path="/signup" element={<SignupScreen />} ></Route>
+    //                 <Route path="/doTest" element={<TestScreen />}></Route>
+    //                 <Route path="/profile" element={<ProfileScreen />}></Route>
+    //             </Route>
+    //         </Routes>
+    //     </BrowserRouter>
+    // );
 };
 
 export default App;
